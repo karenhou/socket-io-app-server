@@ -62,14 +62,20 @@ io.on("connection", (socket) => {
   });
 
   socket.on("start_game", (data) => {
-    console.log("start_game", data);
-    let objData = { guessNum: generateRandomNum() };
-    // socket.in(data.roomId).emit("guessingNum", { message: "1234" });
-    io.in(data.roomId).emit("guessingNum", objData);
+    const objData = { targetNumber: generateRandomNum() };
+    console.log("start_game ", data, objData);
+    io.in(data.roomId).emit("targeted_number", objData);
+  });
+
+  socket.on("reset_game", (data) => {
+    let objData = { targetNumber: generateRandomNum() };
+    console.log("reset_game ", data, objData);
+    io.in(data.roomId).emit("reset_game", data);
+    io.in(data.roomId).emit("targeted_number", objData);
   });
 
   socket.on("end_game", (data) => {
-    // socket.to(data.roomId).emit("game_result", data);
+    console.log("end_game ", data);
     data.timestamp = new Date().getTime();
     io.in(data.roomId).emit("game_result", data);
   });
