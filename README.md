@@ -18,4 +18,3 @@ npm start
 ## TODOs
 
 - strict a room to have 2 person
-- reoranize application on handle different event
