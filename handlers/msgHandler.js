@@ -5,11 +5,12 @@ module.exports = (io, socket) => {
   };
 
   const handleMsgPrivate = (data) => {
-    console.log("send_message_private ", data); //msg, from,  timestamp, to
+    console.log("send_message_private ", data); //msg, from, fromUser  timestamp, to
 
     const newData = {
       message: data.message,
       from: data.from,
+      fromUser: data.fromUser,
       timestamp: data.timestamp,
     };
     io.to(data.to).emit("receive_message_private", newData);
