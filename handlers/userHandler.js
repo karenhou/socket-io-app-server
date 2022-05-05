@@ -65,11 +65,21 @@ module.exports = (io, socket) => {
     }
   };
 
+  const removeUser = (data) => {
+    userInfo = userInfo.filter((user) => user.socketId !== data.socketId);
+  };
+
   const handleAddUser = (data) => {
     console.log("handleAddUser ", data);
     addUser(data);
     io.emit("getUsers", userInfo);
   };
+  const handleRemoveUser = (data) => {
+    console.log("handleRemoveUser ", data);
+    removeUser(data);
+    io.emit("getUsers", userInfo);
+  };
 
   socket.on("addUser", handleAddUser);
+  socket.on("removeUser", handleRemoveUser);
 };
