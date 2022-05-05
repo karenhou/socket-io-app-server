@@ -43,4 +43,33 @@ module.exports = (io, socket) => {
   socket.on("login", handleLogin);
   socket.on("logout", handleLogout);
   socket.on("get_current_users", handleGetCurrentUsers);
+
+  const addUser = (data) => {
+    console.log("userInfo ", data, userInfo);
+
+    //check exist
+    const isUserExist = userInfo.findIndex(
+      (user) => user.username === data.username
+    );
+
+    // if doesn't exist, add it
+    if (isUserExist === -1) {
+      userInfo.push(data);
+    } else {
+      // if exist, updates it
+      userInfo.some((user, index) => {
+        if (user.username === data.username) {
+          userInfo[index] = data;
+        }
+      });
+    }
+  };
+
+  const handleAddUser = (data) => {
+    console.log("handleAddUser ", data);
+    addUser(data);
+    io.emit("getUsers", userInfo);
+  };
+
+  socket.on("addUser", handleAddUser);
 };

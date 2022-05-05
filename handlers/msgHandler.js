@@ -16,6 +16,12 @@ module.exports = (io, socket) => {
     io.to(data.to).emit("receive_message_private", newData);
   };
 
+  const handleMsgAll = (data) => {
+    console.log("send_message_all ", data);
+    io.emit("receive_message_all", data);
+  };
+
   socket.on("send_message_room", handleMsgRoom);
   socket.on("send_message_private", handleMsgPrivate);
+  socket.on("send_message_all", handleMsgAll);
 };
