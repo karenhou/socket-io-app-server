@@ -32,6 +32,17 @@ io.on("connection", (socket) => {
   onConnection(socket);
 });
 
+const registerGameLobbyHandlers = require("./handlers/games/gameLobbyHandler");
+const onGameConnection = (socket) => {
+  registerGameLobbyHandlers(io, socket);
+};
+
+const gameNamespace = io.of("/game");
+gameNamespace.on("connection", (socket) => {
+  console.log(`game connected: ${socket.id}`);
+  onGameConnection(socket);
+});
+
 server.listen(3001, () => {
   console.log("Server is running on port 3001");
 });
