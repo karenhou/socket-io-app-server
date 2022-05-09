@@ -22,8 +22,6 @@ module.exports = (io, socket) => {
     } else {
       return false;
     }
-
-    //TODO if exist, can't create
   };
 
   const handleCreateGame = (data) => {
@@ -42,9 +40,6 @@ module.exports = (io, socket) => {
       io.of("/game").in(data.roomNum).emit("create_game_result", {
         msg: "success",
         roomInfo: gameRoom[idxOfRoom],
-        // roomNum: data.roomNum,
-        // host: data.host,
-        // password: data.password,
       });
     } else {
       io.of("/game").to(socket.id).emit("create_game_result", {
@@ -96,7 +91,7 @@ module.exports = (io, socket) => {
         .in(data.roomNum)
         .emit("roomInfoUpdate", {
           msg: `${socket.id} has left the game`,
-          roomStat: gameRoom[idxOfRoom],
+          roomInfo: gameRoom[idxOfRoom],
         });
     }
   };
@@ -107,41 +102,47 @@ module.exports = (io, socket) => {
   };
 
   const handleJoinGame = (data) => {
+    console.log("handleJoinGame", data, gameRoom);
     //check if this room exist
     const idxOfRoom = gameRoom.findIndex(
       (game) => game.roomNum === data.roomNum
     );
 
-    //can't find the room, send socket info
     if (idxOfRoom === -1) {
-      io.of("/game").to(socket.id).emit("join_game_result", {
+      console.log("inccorecrt password");
+      return io.of("/game").to(socket.id).emit("join_game_result", {
         msg: "game room doesnt exist",
       });
-    } else {
-      //found the room, join it
-      //TODO, validate password, check if room full
-      socket.join(data.roomNum);
-      //add this person to gameRoom
-      gameRoom[idxOfRoom].currentUser.push({
-        userSocket: socket.id,
-        name: data.username,
-      });
-      delete data.username;
-      io.of("/game").in(data.roomNum).emit("join_game_result", {
-        msg: "success",
-        roomInfo: gameRoom[idxOfRoom],
-        // roomNum: gameRoom[idxOfRoom].roomNum,
-        // password: gameRoom[idxOfRoom].password,
-        // host: gameRoom[idxOfRoom].host,
-      });
-
-      io.of("/game")
-        .in(data.roomNum)
-        .emit("roomInfoUpdate", {
-          msg: `${socket.id} has joined the room`,
-          roomStat: gameRoom[idxOfRoom],
-        });
     }
+
+    if (gameRoom[idxOfRoom].password !== data.password) {
+      console.log("inccorecrt password");
+      return io.of("/game").to(socket.id).emit("join_game_result", {
+        msg: "incorrect password",
+      });
+    }
+
+    socket.join(data.roomNum);
+    //add this person to gameRoom
+    gameRoom[idxOfRoom].currentUser.push({
+      userSocket: socket.id,
+      name: data.username,
+    });
+
+    delete data.username;
+
+    //broadcast result
+    io.of("/game").in(data.roomNum).emit("join_game_result", {
+      msg: "success",
+      roomInfo: gameRoom[idxOfRoom],
+    });
+
+    io.of("/game")
+      .in(data.roomNum)
+      .emit("roomInfoUpdate", {
+        msg: `${socket.id} has joined the room`,
+        roomInfo: gameRoom[idxOfRoom],
+      });
   };
 
   const handleLogoutGame = (data) => {
@@ -163,11 +164,10 @@ module.exports = (io, socket) => {
         .in(data.roomNum)
         .emit("roomInfoUpdate", {
           msg: `${socket.id} has lefted the room`,
-          roomStat: gameRoom[idxOfRoom],
+          roomInfo: gameRoom[idxOfRoom],
         });
     }
   };
-
   socket.on("create_game", handleCreateGame);
   socket.on("quit_game", handleQuitGame);
   socket.on("join_game", handleJoinGame);

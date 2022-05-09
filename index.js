@@ -33,8 +33,10 @@ io.on("connection", (socket) => {
 });
 
 const registerGameLobbyHandlers = require("./handlers/games/gameLobbyHandler");
+const registerGameActionHandlers = require("./handlers/games/gameActionHandler");
 const onGameConnection = (socket) => {
   registerGameLobbyHandlers(io, socket);
+  registerGameActionHandlers(io, socket);
 };
 
 const gameNamespace = io.of("/game");
