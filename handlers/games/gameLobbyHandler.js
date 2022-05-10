@@ -103,20 +103,33 @@ module.exports = (io, socket) => {
 
   const handleJoinGame = (data) => {
     console.log("handleJoinGame", data, gameRoom);
+
     //check if this room exist
     const idxOfRoom = gameRoom.findIndex(
       (game) => game.roomNum === data.roomNum
     );
 
     if (idxOfRoom === -1) {
-      console.log("inccorecrt password");
+      console.log("game room doesnt exist");
       return io.of("/game").to(socket.id).emit("join_game_result", {
         msg: "game room doesnt exist",
       });
     }
 
+    //check if this room is full
+    if (
+      gameRoom[idxOfRoom].currentUser.length >=
+      gameRoom[idxOfRoom].maxPlayerCount
+    ) {
+      console.log("room full");
+      return io.of("/game").to(socket.id).emit("join_game_result", {
+        msg: "room is full",
+      });
+    }
+
+    //check if password is correct
     if (gameRoom[idxOfRoom].password !== data.password) {
-      console.log("inccorecrt password");
+      console.log("incorecrt password");
       return io.of("/game").to(socket.id).emit("join_game_result", {
         msg: "incorrect password",
       });
@@ -140,7 +153,7 @@ module.exports = (io, socket) => {
     io.of("/game")
       .in(data.roomNum)
       .emit("roomInfoUpdate", {
-        msg: `${socket.id} has joined the room`,
+        msg: `${socket.id} has joined the game`,
         roomInfo: gameRoom[idxOfRoom],
       });
   };
