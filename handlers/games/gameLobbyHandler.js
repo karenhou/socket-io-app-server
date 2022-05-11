@@ -181,8 +181,70 @@ module.exports = (io, socket) => {
         });
     }
   };
+
+  const handleKickPlayer = async (data) => {
+    console.log("handleKickPlayer", data);
+
+    //check if this room exist
+    const idxOfRoom = gameRoom.findIndex(
+      (game) => game.roomNum === data.roomNum
+    );
+
+    if (idxOfRoom === -1) {
+      console.log("no such room");
+      //remove itself from the page
+      io.of("/game").to(socket.id).emit("kick_player_result", {
+        msg: "no such room",
+      });
+      return;
+    }
+
+    //check if this socket exist in that room
+    const idxOfUser = gameRoom[idxOfRoom].currentUser.findIndex(
+      (user) => user.userSocket === data.userSocket
+    );
+
+    if (idxOfUser === -1) {
+      console.log("no such user");
+      io.of("/game").to(socket.id).emit("kick_player_result", {
+        msg: "no such user",
+      });
+      return;
+    }
+
+    //remove this user from gameRoom
+    gameRoom[idxOfRoom].currentUser.splice(idxOfUser, 1);
+
+    //inform host
+    io.of("/game").to(socket.id).emit("kick_player_result", {
+      msg: "success",
+    });
+
+    //inform victim
+    io.of("/game")
+      .to(data.userSocket)
+      .emit("you_been_kicked", {
+        msg: `You've been kicked out of the game #${data.roomNum}`,
+      });
+    //fetch list of user socket, disconnect this user from the room
+    const currentSockets = await io.of("/game").in(data.roomNum).fetchSockets();
+    for (const socket of currentSockets) {
+      if (socket.id === data.userSocket) {
+        socket.leave(data.roomNum);
+      }
+    }
+
+    //broadcast to room that this user has been kicked
+    io.of("/game")
+      .in(data.roomNum)
+      .emit("roomInfoUpdate", {
+        msg: `${data.userSocket} has been kicked out of the game`,
+        roomInfo: gameRoom[idxOfRoom],
+      });
+  };
   socket.on("create_game", handleCreateGame);
   socket.on("quit_game", handleQuitGame);
   socket.on("join_game", handleJoinGame);
   socket.on("logout_game", handleLogoutGame);
+  socket.on("kick_player", handleKickPlayer);
 };
