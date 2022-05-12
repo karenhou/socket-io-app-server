@@ -56,7 +56,7 @@ module.exports = (io, socket) => {
 
     //doesn't exist
     if (idxOfRoom === -1) {
-      console.log("no such room");
+      console.log("quitGame no such room");
       //remove itself from the page
       io.of("/game").to(socket.id).emit("quit_game_result", {
         msg: "success",
@@ -79,6 +79,12 @@ module.exports = (io, socket) => {
       //kick everyone out
       io.of("/game").socketsLeave(data.roomNum);
     } else {
+      //remove this socket from the room
+      const idxOfUser = gameRoom[idxOfRoom].currentUser.findIndex(
+        (user) => user.userSocket === socket.id
+      );
+      gameRoom[idxOfRoom].currentUser.splice(idxOfUser, 1);
+
       //kick this socket out
       socket.leave(data.roomNum);
       //inform this socket of quitting result
@@ -97,7 +103,7 @@ module.exports = (io, socket) => {
   };
 
   const handleQuitGame = (data) => {
-    console.log("handleQuitGame socket.id", socket.id);
+    console.log("handleQuitGame", data);
     quitGame(data);
   };
 
@@ -159,19 +165,45 @@ module.exports = (io, socket) => {
   };
 
   const handleLogoutGame = (data) => {
-    console.log("handleLogoutGame socket.id", socket.id);
+    console.log("handleLogoutGame ", data);
 
     //remove this socket from the gameRoom
     const idxOfRoom = gameRoom.findIndex(
       (game) => game.roomNum === data.roomNum
     );
 
+    if (idxOfRoom === -1) {
+      console.log("handleLogoutGame no such room");
+      return;
+    }
+
     const idxOfUser = gameRoom[idxOfRoom].currentUser.findIndex(
       (user) => user.userSocket === socket.id
     );
 
+    if (idxOfUser === -1) {
+      console.log("handleLogoutGame no such user");
+      return;
+    }
+
+    //see if this socket is the host, if yes, remove whole room, kick everyone out
+    const isHost = gameRoom.findIndex((game) => game.host === socket.id);
+
+    //host logged out, clear all
+    if (isHost !== -1) {
+      //remove this room
+      gameRoom.splice(isHost, 1);
+      //boardcast in room, that room has been closed
+      io.of("/game").in(data.roomNum).emit("gameroom_closed", {
+        msg: "Game room has been closed due to host leaving",
+        roomId: data.roomId,
+      });
+      //kick everyone out
+      io.of("/game").socketsLeave(data.roomNum);
+      return;
+    }
+
     if (idxOfUser !== -1 && idxOfRoom !== -1) {
-      delete gameRoom[idxOfRoom].currentUser[idxOfUser];
       socket.leave(data.roomNum);
       io.of("/game")
         .in(data.roomNum)
@@ -179,6 +211,7 @@ module.exports = (io, socket) => {
           msg: `${socket.id} has lefted the room`,
           roomInfo: gameRoom[idxOfRoom],
         });
+      gameRoom[idxOfRoom].currentUser.splice(idxOfUser, 1);
     }
   };
 
