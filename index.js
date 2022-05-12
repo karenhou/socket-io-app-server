@@ -17,13 +17,11 @@ const io = new Server(server, {
 
 const reigsterMsgHandlers = require("./handlers/msgHandler");
 const registerRoomHandlers = require("./handlers/roomHandler");
-const registerGameHandlers = require("./handlers/gameHandler");
 const registerUserHandlers = require("./handlers/userHandler");
 
 const onConnection = (socket) => {
   reigsterMsgHandlers(io, socket);
   registerRoomHandlers(io, socket);
-  registerGameHandlers(io, socket);
   registerUserHandlers(io, socket);
 };
 
