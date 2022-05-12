@@ -83,6 +83,7 @@ module.exports = (io, socket) => {
       const idxOfUser = gameRoom[idxOfRoom].currentUser.findIndex(
         (user) => user.userSocket === socket.id
       );
+      const userName = gameRoom[idxOfRoom].currentUser[idxOfUser].name;
       gameRoom[idxOfRoom].currentUser.splice(idxOfUser, 1);
 
       //kick this socket out
@@ -96,7 +97,7 @@ module.exports = (io, socket) => {
       io.of("/game")
         .in(data.roomNum)
         .emit("roomInfoUpdate", {
-          msg: `${socket.id} has left the game`,
+          msg: `${userName} has left the game`,
           roomInfo: gameRoom[idxOfRoom],
         });
     }
@@ -148,8 +149,6 @@ module.exports = (io, socket) => {
       name: data.username,
     });
 
-    delete data.username;
-
     //broadcast result
     io.of("/game").in(data.roomNum).emit("join_game_result", {
       msg: "success",
@@ -159,9 +158,11 @@ module.exports = (io, socket) => {
     io.of("/game")
       .in(data.roomNum)
       .emit("roomInfoUpdate", {
-        msg: `${socket.id} has joined the game`,
+        msg: `${data.username} has joined the game`,
         roomInfo: gameRoom[idxOfRoom],
       });
+
+    delete data.username;
   };
 
   const handleLogoutGame = (data) => {
@@ -208,7 +209,7 @@ module.exports = (io, socket) => {
       io.of("/game")
         .in(data.roomNum)
         .emit("roomInfoUpdate", {
-          msg: `${socket.id} has lefted the room`,
+          msg: `${gameRoom[idxOfRoom].currentUser[idxOfUser].name} has lefted the room`,
           roomInfo: gameRoom[idxOfRoom],
         });
       gameRoom[idxOfRoom].currentUser.splice(idxOfUser, 1);
@@ -245,6 +246,8 @@ module.exports = (io, socket) => {
       return;
     }
 
+    const userName = gameRoom[idxOfRoom].currentUser[idxOfUser].name;
+
     //remove this user from gameRoom
     gameRoom[idxOfRoom].currentUser.splice(idxOfUser, 1);
 
@@ -271,7 +274,7 @@ module.exports = (io, socket) => {
     io.of("/game")
       .in(data.roomNum)
       .emit("roomInfoUpdate", {
-        msg: `${data.userSocket} has been kicked out of the game`,
+        msg: `${userName} has been kicked out of the game`,
         roomInfo: gameRoom[idxOfRoom],
       });
   };
